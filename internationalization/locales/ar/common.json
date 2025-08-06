@@ -1,0 +1,102 @@
+{
+  "app": {
+    "name": "نظام تصاريح الطلاب",
+    "tagline": "أكثر منصات إدارة الوصول التعليمي تقدماً في العالم",
+    "description": "نظام إدارة تصاريح طلابية رقمي ثوري مع تحليلات مدعومة بالذكاء الاصطناعي والتحقق البيومتري والمراقبة في الوقت الفعلي"
+  },
+  "navigation": {
+    "dashboard": "لوحة التحكم",
+    "students": "الطلاب",
+    "passes": "التصاريح",
+    "analytics": "التحليلات",
+    "settings": "الإعدادات",
+    "compliance": "الامتثال",
+    "help": "المساعدة",
+    "profile": "الملف الشخصي",
+    "logout": "تسجيل الخروج"
+  },
+  "actions": {
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "create": "إنشاء",
+    "update": "تحديث",
+    "submit": "إرسال",
+    "reset": "إعادة تعيين",
+    "search": "بحث",
+    "filter": "تصفية",
+    "export": "تصدير",
+    "import": "استيراد",
+    "download": "تحميل",
+    "upload": "رفع",
+    "print": "طباعة",
+    "share": "مشاركة",
+    "approve": "موافقة",
+    "reject": "رفض",
+    "activate": "تفعيل",
+    "deactivate": "إلغاء التفعيل"
+  },
+  "status": {
+    "active": "نشط",
+    "inactive": "غير نشط",
+    "pending": "معلق",
+    "approved": "موافق عليه",
+    "rejected": "مرفوض",
+    "expired": "منتهي الصلاحية",
+    "suspended": "معلق",
+    "loading": "جاري التحميل...",
+    "saving": "جاري الحفظ...",
+    "success": "نجح",
+    "error": "خطأ",
+    "warning": "تحذير",
+    "info": "معلومات"
+  },
+  "time": {
+    "today": "اليوم",
+    "yesterday": "أمس",
+    "tomorrow": "غداً",
+    "thisWeek": "هذا الأسبوع",
+    "lastWeek": "الأسبوع الماضي",
+    "thisMonth": "هذا الشهر",
+    "lastMonth": "الشهر الماضي",
+    "thisYear": "هذا العام",
+    "lastYear": "العام الماضي"
+  },
+  "features": {
+    "aiPowered": "تحليلات مدعومة بالذكاء الاصطناعي",
+    "biometric": "التحقق البيومتري",
+    "realTime": "المراقبة في الوقت الفعلي",
+    "blockchain": "أمان البلوك تشين",
+    "iot": "تكامل إنترنت الأشياء",
+    "mobile": "تطبيقات الهاتف المحمول",
+    "multiTenant": "هندسة متعددة المستأجرين",
+    "compliance": "الامتثال العالمي"
+  },
+  "pricing": {
+    "free": "مجاني",
+    "starter": "المبتدئ",
+    "professional": "المحترف",
+    "enterprise": "المؤسسات",
+    "perStudent": "لكل طالب",
+    "perMonth": "شهرياً",
+    "annualDiscount": "وفر 20% سنوياً",
+    "customPricing": "تسعير مخصص متاح"
+  },
+  "compliance": {
+    "gdprCompliant": "متوافق مع GDPR",
+    "ferpaCompliant": "متوافق مع FERPA",
+    "coppaCompliant": "متوافق مع COPPA",
+    "dataEncrypted": "مشفر من الطرف للطرف",
+    "soc2": "معتمد SOC 2",
+    "iso27001": "معتمد ISO 27001"
+  },
+  "footer": {
+    "copyright": "© 2024 نظام تصاريح الطلاب. جميع الحقوق محفوظة.",
+    "privacy": "سياسة الخصوصية",
+    "terms": "شروط الخدمة",
+    "contact": "اتصل بنا",
+    "support": "الدعم",
+    "documentation": "التوثيق"
+  }
+}

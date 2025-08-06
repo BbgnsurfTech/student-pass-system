@@ -1,0 +1,81 @@
+name: Deploy to Staging
+
+on:
+  push:
+    branches: [ develop ]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME_BACKEND: student-pass-backend
+  IMAGE_NAME_FRONTEND: student-pass-frontend
+
+jobs:
+  deploy-staging:
+    runs-on: ubuntu-latest
+    environment: staging
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+    
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+    
+    - name: Get commit SHA
+      id: vars
+      run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+    
+    - name: Update kubeconfig
+      run: |
+        aws eks update-kubeconfig --region ${{ secrets.AWS_REGION }} --name student-pass-staging-cluster
+    
+    - name: Deploy to staging
+      run: |
+        # Update image tags in k8s manifests
+        sed -i "s|IMAGE_TAG|${{ steps.vars.outputs.sha_short }}|g" k8s/staging/backend-deployment.yaml
+        sed -i "s|IMAGE_TAG|${{ steps.vars.outputs.sha_short }}|g" k8s/staging/frontend-deployment.yaml
+        
+        # Apply configurations
+        kubectl apply -f k8s/staging/namespace.yaml
+        kubectl apply -f k8s/staging/secrets.yaml
+        kubectl apply -f k8s/staging/configmap.yaml
+        kubectl apply -f k8s/staging/postgres-deployment.yaml
+        kubectl apply -f k8s/staging/redis-deployment.yaml
+        kubectl apply -f k8s/staging/backend-deployment.yaml
+        kubectl apply -f k8s/staging/frontend-deployment.yaml
+        kubectl apply -f k8s/staging/ingress.yaml
+    
+    - name: Wait for deployment
+      run: |
+        kubectl rollout status deployment/backend-deployment -n staging --timeout=300s
+        kubectl rollout status deployment/frontend-deployment -n staging --timeout=300s
+    
+    - name: Run smoke tests
+      run: |
+        # Get staging URL
+        STAGING_URL=$(kubectl get ingress student-pass-ingress -n staging -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+        
+        # Wait for URL to be ready
+        sleep 60
+        
+        # Run smoke tests
+        curl -f http://$STAGING_URL/health || exit 1
+        curl -f http://$STAGING_URL/api/health || exit 1
+    
+    - name: Notify deployment status
+      uses: 8398a7/action-slack@v3
+      if: always()
+      with:
+        status: ${{ job.status }}
+        channel: '#deployments'
+        webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        fields: repo,message,commit,author,action,eventName,ref,workflow

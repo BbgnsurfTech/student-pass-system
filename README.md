@@ -237,7 +237,7 @@ Instant verification system for security personnel and access points.
 
 ## Success Stories
 
-### 🏫 **Riverside University**
+### 🏫 **Cosmopolitan University**
 *"The Student Pass System transformed our campus security and reduced administrative overhead by 80%. The real-time analytics help us make data-driven decisions about campus operations."*
 - 15,000 students
 - 99.8% uptime
@@ -251,7 +251,7 @@ Instant verification system for security personnel and access points.
 
 ## Awards & Recognition
 
-- 🏆 **Best Educational Technology Solution 2024**
+- 🏆 **Best Educational Technology Solution 2024 - Arewa Tech Summit**
 - 🥇 **Innovation in Campus Security Award**
 - 🌟 **Top 10 EdTech Startups to Watch**
 

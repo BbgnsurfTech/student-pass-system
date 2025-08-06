@@ -1,0 +1,65 @@
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Provider } from 'react-redux';
+import { store } from './store/store';
+import Layout from './components/common/Layout';
+import LandingPage from './pages/LandingPage';
+import LoginPage from './pages/auth/LoginPage';
+import StudentDashboard from './pages/student/StudentDashboard';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import ApplicationPage from './pages/student/ApplicationPage';
+import PassPage from './pages/student/PassPage';
+import ApplicationReviewPage from './pages/admin/ApplicationReviewPage';
+import AnalyticsDashboard from './pages/admin/AnalyticsDashboard';
+import ScannerPage from './pages/security/ScannerPage';
+
+function App() {
+  return (
+    <Provider store={store}>
+      <Router>
+        <div className="min-h-screen bg-gray-50">
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            
+            {/* Protected Routes */}
+            <Route path="/student/*" element={
+              <Layout>
+                <Routes>
+                  <Route path="dashboard" element={<StudentDashboard />} />
+                  <Route path="applications" element={<ApplicationPage />} />
+                  <Route path="passes" element={<PassPage />} />
+                  <Route path="profile" element={<div>Profile</div>} />
+                </Routes>
+              </Layout>
+            } />
+            
+            <Route path="/admin/*" element={
+              <Layout>
+                <Routes>
+                  <Route path="dashboard" element={<AdminDashboard />} />
+                  <Route path="applications" element={<ApplicationReviewPage />} />
+                  <Route path="analytics" element={<AnalyticsDashboard />} />
+                  <Route path="users" element={<div>User Management</div>} />
+                  <Route path="reports" element={<div>Reports</div>} />
+                </Routes>
+              </Layout>
+            } />
+            
+            <Route path="/security/*" element={
+              <Layout>
+                <Routes>
+                  <Route path="scanner" element={<ScannerPage />} />
+                  <Route path="logs" element={<div>Access Logs</div>} />
+                </Routes>
+              </Layout>
+            } />
+          </Routes>
+        </div>
+      </Router>
+    </Provider>
+  );
+}
+
+export default App

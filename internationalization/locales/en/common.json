@@ -1,0 +1,102 @@
+{
+  "app": {
+    "name": "Student Pass System",
+    "tagline": "The World's Most Advanced Educational Access Management Platform",
+    "description": "Revolutionary digital student pass management with AI-powered analytics, biometric verification, and real-time monitoring"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "students": "Students",
+    "passes": "Passes",
+    "analytics": "Analytics",
+    "settings": "Settings",
+    "compliance": "Compliance",
+    "help": "Help",
+    "profile": "Profile",
+    "logout": "Logout"
+  },
+  "actions": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "update": "Update",
+    "submit": "Submit",
+    "reset": "Reset",
+    "search": "Search",
+    "filter": "Filter",
+    "export": "Export",
+    "import": "Import",
+    "download": "Download",
+    "upload": "Upload",
+    "print": "Print",
+    "share": "Share",
+    "approve": "Approve",
+    "reject": "Reject",
+    "activate": "Activate",
+    "deactivate": "Deactivate"
+  },
+  "status": {
+    "active": "Active",
+    "inactive": "Inactive",
+    "pending": "Pending",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "expired": "Expired",
+    "suspended": "Suspended",
+    "loading": "Loading...",
+    "saving": "Saving...",
+    "success": "Success",
+    "error": "Error",
+    "warning": "Warning",
+    "info": "Information"
+  },
+  "time": {
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "tomorrow": "Tomorrow",
+    "thisWeek": "This Week",
+    "lastWeek": "Last Week",
+    "thisMonth": "This Month",
+    "lastMonth": "Last Month",
+    "thisYear": "This Year",
+    "lastYear": "Last Year"
+  },
+  "features": {
+    "aiPowered": "AI-Powered Analytics",
+    "biometric": "Biometric Verification",
+    "realTime": "Real-Time Monitoring",
+    "blockchain": "Blockchain Security",
+    "iot": "IoT Integration",
+    "mobile": "Mobile Apps",
+    "multiTenant": "Multi-Tenant Architecture",
+    "compliance": "Global Compliance"
+  },
+  "pricing": {
+    "free": "Free",
+    "starter": "Starter",
+    "professional": "Professional",
+    "enterprise": "Enterprise",
+    "perStudent": "per student",
+    "perMonth": "per month",
+    "annualDiscount": "Save 20% annually",
+    "customPricing": "Custom pricing available"
+  },
+  "compliance": {
+    "gdprCompliant": "GDPR Compliant",
+    "ferpaCompliant": "FERPA Compliant",
+    "coppaCompliant": "COPPA Compliant",
+    "dataEncrypted": "End-to-End Encrypted",
+    "soc2": "SOC 2 Certified",
+    "iso27001": "ISO 27001 Certified"
+  },
+  "footer": {
+    "copyright": "© 2024 Student Pass System. All rights reserved.",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "contact": "Contact Us",
+    "support": "Support",
+    "documentation": "Documentation"
+  }
+}

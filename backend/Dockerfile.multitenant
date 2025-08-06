@@ -1,0 +1,109 @@
+# Multi-stage build for Student Pass System Multi-tenant Architecture
+FROM node:18-alpine AS base
+
+# Install system dependencies for native modules
+RUN apk add --no-cache \
+    python3 \
+    make \
+    g++ \
+    libc6-compat \
+    cairo-dev \
+    pango-dev \
+    jpeg-dev \
+    giflib-dev \
+    librsvg-dev \
+    pixman-dev \
+    pkgconfig
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+COPY prisma/ ./prisma/
+
+# Install dependencies
+FROM base AS deps
+RUN npm ci --only=production && npm cache clean --force
+
+# Development dependencies for build
+FROM base AS build-deps
+RUN npm ci
+
+# Build stage
+FROM build-deps AS builder
+COPY . .
+
+# Generate Prisma client
+RUN npx prisma generate
+
+# Build TypeScript
+RUN npm run build
+
+# Production stage
+FROM node:18-alpine AS production
+
+# Install system dependencies for production
+RUN apk add --no-cache \
+    curl \
+    dumb-init \
+    cairo \
+    pango \
+    jpeg \
+    giflib \
+    librsvg \
+    pixman
+
+# Create app user
+RUN addgroup -g 1001 -S nodejs
+RUN adduser -S nodejs -u 1001
+
+# Set working directory
+WORKDIR /app
+
+# Copy built application
+COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
+COPY --from=builder --chown=nodejs:nodejs /app/prisma ./prisma
+COPY --from=deps --chown=nodejs:nodejs /app/node_modules ./node_modules
+COPY --chown=nodejs:nodejs package*.json ./
+
+# Create necessary directories
+RUN mkdir -p uploads/branding uploads/documents uploads/profiles && \
+    chown -R nodejs:nodejs uploads
+RUN mkdir -p ml-models && chown -R nodejs:nodejs ml-models
+RUN mkdir -p logs && chown -R nodejs:nodejs logs
+
+# Switch to non-root user
+USER nodejs
+
+# Set environment variables
+ENV NODE_ENV=production
+ENV PORT=3000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:3000/health || exit 1
+
+# Expose port
+EXPOSE 3000
+
+# Use dumb-init for proper signal handling
+ENTRYPOINT ["dumb-init", "--"]
+
+# Default command
+CMD ["node", "dist/server.js"]
+
+# Multi-service variant for different components
+FROM production AS queue-worker
+CMD ["node", "dist/queue/worker.js"]
+
+FROM production AS cron-jobs
+CMD ["node", "dist/scripts/cronJobs.js"]
+
+# Development variant
+FROM build-deps AS development
+COPY . .
+RUN npx prisma generate
+EXPOSE 3000
+EXPOSE 9229
+CMD ["npm", "run", "dev"]

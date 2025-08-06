@@ -1,0 +1,274 @@
+# Student Pass System Alert Rules
+groups:
+  - name: student-pass-alerts
+    rules:
+      # Application Health Alerts
+      - alert: ApplicationDown
+        expr: up{job=~"student-pass-.*"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "Student Pass application is down"
+          description: "{{ $labels.job }} has been down for more than 1 minute"
+          runbook_url: "https://wiki.company.com/runbooks/application-down"
+
+      - alert: HighErrorRate
+        expr: student_pass:error_rate > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate for {{ $labels.service }} is {{ $value | humanizePercentage }} for the last 5 minutes"
+          runbook_url: "https://wiki.company.com/runbooks/high-error-rate"
+
+      - alert: CriticalErrorRate
+        expr: student_pass:error_rate > 0.1
+        for: 2m
+        labels:
+          severity: critical
+          team: backend
+        annotations:
+          summary: "Critical error rate detected"
+          description: "Error rate for {{ $labels.service }} is {{ $value | humanizePercentage }} for the last 2 minutes"
+          runbook_url: "https://wiki.company.com/runbooks/critical-error-rate"
+
+      - alert: HighResponseTime
+        expr: student_pass:response_time_p99 > 2
+        for: 10m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "High response time detected"
+          description: "99th percentile response time for {{ $labels.service }} is {{ $value }}s for the last 10 minutes"
+          runbook_url: "https://wiki.company.com/runbooks/high-response-time"
+
+      # Database Alerts
+      - alert: DatabaseDown
+        expr: up{job="postgres-exporter"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: database
+        annotations:
+          summary: "PostgreSQL database is down"
+          description: "PostgreSQL database has been down for more than 1 minute"
+          runbook_url: "https://wiki.company.com/runbooks/database-down"
+
+      - alert: DatabaseConnectionsHigh
+        expr: student_pass:db_connection_utilization > 80
+        for: 5m
+        labels:
+          severity: warning
+          team: database
+        annotations:
+          summary: "High database connection utilization"
+          description: "Database connection utilization is {{ $value }}% for the last 5 minutes"
+          runbook_url: "https://wiki.company.com/runbooks/db-connections-high"
+
+      - alert: DatabaseConnectionsCritical
+        expr: student_pass:db_connection_utilization > 95
+        for: 1m
+        labels:
+          severity: critical
+          team: database
+        annotations:
+          summary: "Critical database connection utilization"
+          description: "Database connection utilization is {{ $value }}% for the last 1 minute"
+          runbook_url: "https://wiki.company.com/runbooks/db-connections-critical"
+
+      - alert: DatabaseSlowQueries
+        expr: rate(pg_stat_statements_mean_time_ms[5m]) > 1000
+        for: 10m
+        labels:
+          severity: warning
+          team: database
+        annotations:
+          summary: "Slow database queries detected"
+          description: "Average query time is {{ $value }}ms for the last 10 minutes"
+          runbook_url: "https://wiki.company.com/runbooks/slow-queries"
+
+      # Cache Alerts
+      - alert: RedisDown
+        expr: up{job="redis-exporter"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: backend
+        annotations:
+          summary: "Redis cache is down"
+          description: "Redis cache has been down for more than 1 minute"
+          runbook_url: "https://wiki.company.com/runbooks/redis-down"
+
+      - alert: RedisLowHitRate
+        expr: student_pass:redis_hit_rate < 80
+        for: 15m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "Low Redis hit rate"
+          description: "Redis hit rate is {{ $value }}% for the last 15 minutes"
+          runbook_url: "https://wiki.company.com/runbooks/redis-low-hit-rate"
+
+      - alert: RedisMemoryHigh
+        expr: redis_memory_used_bytes / redis_config_maxmemory * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "High Redis memory usage"
+          description: "Redis memory usage is {{ $value }}% for the last 5 minutes"
+          runbook_url: "https://wiki.company.com/runbooks/redis-memory-high"
+
+      # Infrastructure Alerts
+      - alert: PodCrashLooping
+        expr: rate(kube_pod_container_status_restarts_total[1h]) > 0
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "Pod is crash looping"
+          description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is restarting frequently"
+          runbook_url: "https://wiki.company.com/runbooks/pod-crash-looping"
+
+      - alert: PodNotReady
+        expr: kube_pod_status_ready{condition="false", namespace=~"student-pass-system|production|staging"} == 1
+        for: 10m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "Pod not ready"
+          description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has been not ready for more than 10 minutes"
+          runbook_url: "https://wiki.company.com/runbooks/pod-not-ready"
+
+      - alert: DeploymentReplicasMismatch
+        expr: kube_deployment_status_replicas != kube_deployment_status_replicas_available
+        for: 10m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "Deployment replicas mismatch"
+          description: "Deployment {{ $labels.deployment }} in namespace {{ $labels.namespace }} has {{ $value }} available replicas out of {{ $labels.replicas }} desired"
+          runbook_url: "https://wiki.company.com/runbooks/deployment-replicas-mismatch"
+
+      - alert: NodeHighCPU
+        expr: student_pass:node_cpu_usage > 85
+        for: 10m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "High CPU usage on node"
+          description: "CPU usage on node {{ $labels.instance }} is {{ $value }}% for the last 10 minutes"
+          runbook_url: "https://wiki.company.com/runbooks/node-high-cpu"
+
+      - alert: NodeHighMemory
+        expr: student_pass:node_memory_usage > 85
+        for: 10m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "High memory usage on node"
+          description: "Memory usage on node {{ $labels.instance }} is {{ $value }}% for the last 10 minutes"
+          runbook_url: "https://wiki.company.com/runbooks/node-high-memory"
+
+      - alert: NodeDiskSpaceHigh
+        expr: (1 - (node_filesystem_avail_bytes{fstype!="tmpfs"} / node_filesystem_size_bytes{fstype!="tmpfs"})) * 100 > 85
+        for: 10m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "High disk usage on node"
+          description: "Disk usage on {{ $labels.device }} of node {{ $labels.instance }} is {{ $value }}% for the last 10 minutes"
+          runbook_url: "https://wiki.company.com/runbooks/node-disk-high"
+
+      - alert: NodeDiskSpaceCritical
+        expr: (1 - (node_filesystem_avail_bytes{fstype!="tmpfs"} / node_filesystem_size_bytes{fstype!="tmpfs"})) * 100 > 95
+        for: 5m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "Critical disk usage on node"
+          description: "Disk usage on {{ $labels.device }} of node {{ $labels.instance }} is {{ $value }}% for the last 5 minutes"
+          runbook_url: "https://wiki.company.com/runbooks/node-disk-critical"
+
+      # Business Logic Alerts
+      - alert: HighUserRegistrationFailureRate
+        expr: rate(user_registrations_failed_total[10m]) / rate(user_registrations_total[10m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "High user registration failure rate"
+          description: "User registration failure rate is {{ $value | humanizePercentage }} for the last 5 minutes"
+          runbook_url: "https://wiki.company.com/runbooks/user-registration-failures"
+
+      - alert: PassValidationFailuresHigh
+        expr: rate(pass_validations_failed_total[10m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "High pass validation failures"
+          description: "Pass validation failures are {{ $value }} per second for the last 5 minutes"
+          runbook_url: "https://wiki.company.com/runbooks/pass-validation-failures"
+
+      # Security Alerts
+      - alert: HighUnauthorizedRequests
+        expr: rate(http_requests_total{status="401"}[10m]) > 5
+        for: 5m
+        labels:
+          severity: warning
+          team: security
+        annotations:
+          summary: "High number of unauthorized requests"
+          description: "Unauthorized requests rate is {{ $value }} per second for the last 5 minutes"
+          runbook_url: "https://wiki.company.com/runbooks/unauthorized-requests"
+
+      - alert: SuspiciousActivity
+        expr: rate(http_requests_total{status="403"}[10m]) > 2
+        for: 5m
+        labels:
+          severity: warning
+          team: security
+        annotations:
+          summary: "Suspicious activity detected"
+          description: "Forbidden requests rate is {{ $value }} per second for the last 5 minutes"
+          runbook_url: "https://wiki.company.com/runbooks/suspicious-activity"
+
+      # SSL Certificate Expiry
+      - alert: SSLCertificateExpiringSoon
+        expr: (probe_ssl_earliest_cert_expiry - time()) / 86400 < 30
+        for: 1h
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "SSL certificate expiring soon"
+          description: "SSL certificate for {{ $labels.instance }} expires in {{ $value }} days"
+          runbook_url: "https://wiki.company.com/runbooks/ssl-cert-expiry"
+
+      - alert: SSLCertificateExpired
+        expr: probe_ssl_earliest_cert_expiry - time() <= 0
+        for: 1m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "SSL certificate expired"
+          description: "SSL certificate for {{ $labels.instance }} has expired"
+          runbook_url: "https://wiki.company.com/runbooks/ssl-cert-expired"

@@ -1,0 +1,23 @@
+{
+  "name": "student-pass-system",
+  "version": "1.0.0",
+  "description": "Digital student pass management system",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:frontend": "cd student-pass-frontend && npm run dev",
+    "dev:backend": "cd backend && npm run dev",
+    "build": "npm run build:frontend && npm run build:backend",
+    "build:frontend": "cd student-pass-frontend && npm run build",
+    "build:backend": "cd backend && npm run build",
+    "install:all": "npm install && cd student-pass-frontend && npm install && cd ../backend && npm install",
+    "clean": "rm -rf node_modules student-pass-frontend/node_modules backend/node_modules"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "workspaces": [
+    "student-pass-frontend",
+    "backend"
+  ]
+}

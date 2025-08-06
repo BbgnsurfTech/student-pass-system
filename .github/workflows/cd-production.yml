@@ -1,0 +1,208 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  workflow_dispatch:
+    inputs:
+      deploy_type:
+        description: 'Deployment type'
+        required: true
+        default: 'blue-green'
+        type: choice
+        options:
+        - blue-green
+        - canary
+        - rolling
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME_BACKEND: student-pass-backend
+  IMAGE_NAME_FRONTEND: student-pass-frontend
+
+jobs:
+  # Production Deployment with Approval
+  deploy-production:
+    runs-on: ubuntu-latest
+    environment: production
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+    
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+    
+    - name: Get commit SHA
+      id: vars
+      run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+    
+    - name: Update kubeconfig
+      run: |
+        aws eks update-kubeconfig --region ${{ secrets.AWS_REGION }} --name student-pass-production-cluster
+    
+    - name: Backup current deployment
+      run: |
+        kubectl get deployment backend-deployment -n production -o yaml > backup-backend-deployment.yaml
+        kubectl get deployment frontend-deployment -n production -o yaml > backup-frontend-deployment.yaml
+    
+    - name: Deploy with Blue-Green strategy
+      if: github.event.inputs.deploy_type == 'blue-green' || github.event.inputs.deploy_type == ''
+      run: |
+        # Create green environment
+        sed -i "s|IMAGE_TAG|${{ steps.vars.outputs.sha_short }}|g" k8s/production/backend-deployment-green.yaml
+        sed -i "s|IMAGE_TAG|${{ steps.vars.outputs.sha_short }}|g" k8s/production/frontend-deployment-green.yaml
+        
+        kubectl apply -f k8s/production/backend-deployment-green.yaml
+        kubectl apply -f k8s/production/frontend-deployment-green.yaml
+        
+        # Wait for green deployment to be ready
+        kubectl rollout status deployment/backend-deployment-green -n production --timeout=600s
+        kubectl rollout status deployment/frontend-deployment-green -n production --timeout=600s
+        
+        # Run health checks on green environment
+        kubectl wait --for=condition=ready pod -l app=backend,version=green -n production --timeout=300s
+        kubectl wait --for=condition=ready pod -l app=frontend,version=green -n production --timeout=300s
+        
+        # Switch traffic to green (update service selectors)
+        kubectl patch service backend-service -n production -p '{"spec":{"selector":{"version":"green"}}}'
+        kubectl patch service frontend-service -n production -p '{"spec":{"selector":{"version":"green"}}}'
+        
+        # Wait for traffic switch
+        sleep 30
+        
+        # Remove blue environment
+        kubectl delete deployment backend-deployment-blue -n production --ignore-not-found=true
+        kubectl delete deployment frontend-deployment-blue -n production --ignore-not-found=true
+    
+    - name: Deploy with Canary strategy
+      if: github.event.inputs.deploy_type == 'canary'
+      run: |
+        # Deploy canary version (10% traffic)
+        sed -i "s|IMAGE_TAG|${{ steps.vars.outputs.sha_short }}|g" k8s/production/backend-deployment-canary.yaml
+        sed -i "s|IMAGE_TAG|${{ steps.vars.outputs.sha_short }}|g" k8s/production/frontend-deployment-canary.yaml
+        
+        kubectl apply -f k8s/production/backend-deployment-canary.yaml
+        kubectl apply -f k8s/production/frontend-deployment-canary.yaml
+        
+        # Wait for canary deployment
+        kubectl rollout status deployment/backend-deployment-canary -n production --timeout=600s
+        kubectl rollout status deployment/frontend-deployment-canary -n production --timeout=600s
+        
+        # Monitor canary for 5 minutes
+        sleep 300
+        
+        # Check error rates and metrics
+        # If successful, gradually increase traffic
+        # This would integrate with your monitoring system
+        
+        # Full rollout
+        kubectl patch deployment backend-deployment -n production -p '{"spec":{"template":{"spec":{"containers":[{"name":"backend","image":"'${{ steps.login-ecr.outputs.registry }}'/'$IMAGE_NAME_BACKEND':'${{ steps.vars.outputs.sha_short }}'"}]}}}}'
+        kubectl patch deployment frontend-deployment -n production -p '{"spec":{"template":{"spec":{"containers":[{"name":"frontend","image":"'${{ steps.login-ecr.outputs.registry }}'/'$IMAGE_NAME_FRONTEND':'${{ steps.vars.outputs.sha_short }}'"}]}}}}'
+        
+        # Clean up canary
+        kubectl delete deployment backend-deployment-canary -n production
+        kubectl delete deployment frontend-deployment-canary -n production
+    
+    - name: Deploy with Rolling Update
+      if: github.event.inputs.deploy_type == 'rolling'
+      run: |
+        # Update deployment images
+        kubectl patch deployment backend-deployment -n production -p '{"spec":{"template":{"spec":{"containers":[{"name":"backend","image":"'${{ steps.login-ecr.outputs.registry }}'/'$IMAGE_NAME_BACKEND':'${{ steps.vars.outputs.sha_short }}'"}]}}}}'
+        kubectl patch deployment frontend-deployment -n production -p '{"spec":{"template":{"spec":{"containers":[{"name":"frontend","image":"'${{ steps.login-ecr.outputs.registry }}'/'$IMAGE_NAME_FRONTEND':'${{ steps.vars.outputs.sha_short }}'"}]}}}}'
+        
+        # Wait for rolling update
+        kubectl rollout status deployment/backend-deployment -n production --timeout=600s
+        kubectl rollout status deployment/frontend-deployment -n production --timeout=600s
+    
+    - name: Run production smoke tests
+      run: |
+        # Get production URL
+        PROD_URL=$(kubectl get ingress student-pass-ingress -n production -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+        
+        # Run comprehensive health checks
+        curl -f https://$PROD_URL/health || exit 1
+        curl -f https://$PROD_URL/api/health || exit 1
+        curl -f https://$PROD_URL/api/auth/health || exit 1
+        
+        # Run business logic tests
+        python3 scripts/production-tests.py --url https://$PROD_URL
+    
+    - name: Update monitoring dashboards
+      run: |
+        # Update Grafana dashboards with new version
+        curl -X POST \
+          -H "Authorization: Bearer ${{ secrets.GRAFANA_API_KEY }}" \
+          -H "Content-Type: application/json" \
+          -d '{"version": "${{ steps.vars.outputs.sha_short }}"}' \
+          "${{ secrets.GRAFANA_URL }}/api/annotations"
+    
+    - name: Notify successful deployment
+      uses: 8398a7/action-slack@v3
+      with:
+        status: success
+        channel: '#production-alerts'
+        webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        fields: repo,message,commit,author,action,eventName,ref,workflow
+        text: |
+          🚀 Production deployment successful!
+          Version: ${{ steps.vars.outputs.sha_short }}
+          Strategy: ${{ github.event.inputs.deploy_type || 'blue-green' }}
+    
+    - name: Create GitHub Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        draft: false
+        prerelease: false
+
+  # Rollback job (manual trigger only)
+  rollback:
+    runs-on: ubuntu-latest
+    environment: production
+    if: failure()
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+    
+    - name: Update kubeconfig
+      run: |
+        aws eks update-kubeconfig --region ${{ secrets.AWS_REGION }} --name student-pass-production-cluster
+    
+    - name: Rollback deployment
+      run: |
+        kubectl rollout undo deployment/backend-deployment -n production
+        kubectl rollout undo deployment/frontend-deployment -n production
+        
+        # Wait for rollback to complete
+        kubectl rollout status deployment/backend-deployment -n production --timeout=300s
+        kubectl rollout status deployment/frontend-deployment -n production --timeout=300s
+    
+    - name: Notify rollback
+      uses: 8398a7/action-slack@v3
+      with:
+        status: success
+        channel: '#production-alerts'
+        webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        text: "🔄 Production rollback completed successfully"
