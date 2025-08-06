@@ -7,7 +7,7 @@ This document provides a comprehensive guide to the cutting-edge AI and machine 
 ## 🧠 AI/ML Features
 
 ### 1. Intelligent Pass Approval System
-**Location**: `/Users/babaganayahayaaminu/Herd/student-pass-system/backend/src/services/ai/intelligentPassApproval.service.ts`
+**Location**: `/student-pass-system/backend/src/services/ai/intelligentPassApproval.service.ts`
 
 **Features**:
 - ML-powered approval likelihood prediction
@@ -35,7 +35,7 @@ const prediction = await intelligentPassApprovalService.predictApproval({
 ```
 
 ### 2. Predictive Analytics Engine
-**Location**: `/Users/babaganayahayaaminu/Herd/student-pass-system/backend/src/services/ai/predictiveAnalytics.service.ts`
+**Location**: `/student-pass-system/backend/src/services/ai/predictiveAnalytics.service.ts`
 
 **Features**:
 - Peak application period prediction
@@ -57,7 +57,7 @@ GET /api/ai/analytics/insights?timeframe=weekly
 ```
 
 ### 3. Natural Language Processing
-**Location**: `/Users/babaganayahayaaminu/Herd/student-pass-system/backend/src/services/ai/naturalLanguageProcessing.service.ts`
+**Location**: `/student-pass-system/backend/src/services/ai/naturalLanguageProcessing.service.ts`
 
 **Features**:
 - AI chatbot for student support
@@ -87,7 +87,7 @@ const response = await nlpService.processChatMessage(
 ```
 
 ### 4. Computer Vision Integration
-**Location**: `/Users/babaganayahayaaminu/Herd/student-pass-system/backend/src/services/ai/computerVision.service.ts`
+**Location**: `/student-pass-system/backend/src/services/ai/computerVision.service.ts`
 
 **Features**:
 - Automated document verification and fraud detection
@@ -108,7 +108,7 @@ POST /api/ai/cv/enhance-image
 ```
 
 ### 5. Recommendation Engine
-**Location**: `/Users/babaganayahayaaminu/Herd/student-pass-system/backend/src/services/ai/recommendationEngine.service.ts`
+**Location**: `/student-pass-system/backend/src/services/ai/recommendationEngine.service.ts`
 
 **Features**:
 - Personalized pass type recommendations
@@ -131,7 +131,7 @@ GET /api/ai/recommendations/:userId/dashboard
 ```
 
 ### 6. Advanced Fraud Detection
-**Location**: `/Users/babaganayahayaaminu/Herd/student-pass-system/backend/src/services/ai/fraudDetection.service.ts`
+**Location**: `/student-pass-system/backend/src/services/ai/fraudDetection.service.ts`
 
 **Features**:
 - Real-time behavioral analysis
@@ -153,7 +153,7 @@ GET /api/ai/fraud/insights
 ## 🔧 Technical Architecture
 
 ### Core AI Service
-**Location**: `/Users/babaganayahayaaminu/Herd/student-pass-system/backend/src/services/ai/core/aiService.ts`
+**Location**: `/student-pass-system/backend/src/services/ai/core/aiService.ts`
 
 The core AI service provides:
 - TensorFlow.js integration for client-side ML models
@@ -163,7 +163,7 @@ The core AI service provides:
 - Model performance monitoring
 
 ### Rate Limiting and Security
-**Location**: `/Users/babaganayahayaaminu/Herd/student-pass-system/backend/src/middleware/rateLimitAI.middleware.ts`
+**Location**: `/backend/src/middleware/rateLimitAI.middleware.ts`
 
 **Features**:
 - Tier-based rate limiting (Basic, Standard, Premium, Real-time)
